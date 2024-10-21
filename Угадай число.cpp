@@ -11,6 +11,7 @@ using namespace std;
 enum LogType {
     USER_INPUT,
     LOG_ERROR,
+    ATTEMPTS,
     GENERATED_NUMBER
 };
 
@@ -26,8 +27,6 @@ struct LogEntry {
     static string getCurrentTime() {
         time_t now = std::time(nullptr);
         tm localtime;
-
-        // Используем localtime_s для безопасного получения локального времени
         localtime_s(&localtime, &now);
 
         ostringstream oss;
@@ -37,11 +36,12 @@ struct LogEntry {
 };
 
 void logMessage(const LogEntry& entry, const string& filename) {
-    ofstream logFile(filename, ios_base::app); // Открываем файл в режиме добавления
+    ofstream logFile(filename, ios_base::app);
     if (logFile.is_open()) {
         logFile << "[" << entry.timestamp << "] "
             << (entry.type == USER_INPUT ? "USER_INPUT" :
-                entry.type == LOG_ERROR ? "ERROR" : "GENERATED_NUMBER")
+                entry.type == LOG_ERROR ? "ERROR" :
+                entry.type == ATTEMPTS ? "ATTEMPTS" : "GENERATED_NUMBER")
             << ": " << entry.message << endl;
         logFile.close();
     }
@@ -53,8 +53,8 @@ void logMessage(const LogEntry& entry, const string& filename) {
 int ugad(int n, int k) {
     cout << "Доступно попыток: " << k << endl;
 
-    // Логируем загаданное число
     logMessage(LogEntry(GENERATED_NUMBER, to_string(n)), "log.txt");
+    logMessage(LogEntry(ATTEMPTS, to_string(k)), "log.txt");
 
     while (k > 0) {
         int chis;
@@ -74,16 +74,16 @@ int ugad(int n, int k) {
 
         if (chis > n) {
             cout << "Загаданное число меньше" << endl;
-            --k;
         }
         else if (chis < n) {
             cout << "Загаданное число больше" << endl;
-            --k;
         }
-        else if (chis == n) {
+        else {
             cout << "Вы угадали!" << endl;
             return chis;
         }
+
+        --k; // Уменьшаем количество попыток только после корректного ввода
     }
 
     cout << endl << "Вы не смогли угадать число " << n << endl;
